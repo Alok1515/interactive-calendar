@@ -32,14 +32,18 @@ const THEMES = [
 ]
 
 const HOLIDAYS: Record<string, string> = {
-  '2025-01-01':"New Year's Day", '2025-01-20':"MLK Jr. Day", '2025-02-17':"Presidents' Day",
-  '2025-04-20':"Easter",         '2025-05-26':"Memorial Day",'2025-06-19':"Juneteenth",
-  '2025-07-04':"Independence Day",'2025-09-01':"Labor Day",  '2025-10-13':"Columbus Day",
-  '2025-11-11':"Veterans Day",   '2025-11-27':"Thanksgiving",'2025-12-25':"Christmas",
-  '2026-01-01':"New Year's Day", '2026-01-19':"MLK Jr. Day", '2026-02-16':"Presidents' Day",
-  '2026-04-05':"Easter",         '2026-05-25':"Memorial Day",'2026-06-19':"Juneteenth",
-  '2026-07-04':"Independence Day",'2026-09-07':"Labor Day",  '2026-10-12':"Columbus Day",
-  '2026-11-11':"Veterans Day",   '2026-11-26':"Thanksgiving",'2026-12-25':"Christmas",
+  // Fixed Indian Holidays (2025 & 2026)
+  '2025-01-14':"Makar Sankranti", '2025-01-26':"Republic Day",'2025-05-01':"Labour Day",
+  '2025-08-15':"Independence Day", '2025-10-02':"Gandhi J. / Dussehra", '2025-12-25':"Christmas",
+  '2026-01-14':"Makar Sankranti", '2026-01-26':"Republic Day",'2026-05-01':"Labour Day",
+  '2026-08-15':"Independence Day", '2026-10-02':"Gandhi Jayanti", '2026-12-25':"Christmas",
+
+  // Major Indian Festivals (Approx/Expected Lunar dates for 25/26)
+  '2025-03-14':"Holi", '2025-03-31':"Eid-ul-Fitr", '2025-08-27':"Ganesh Chaturthi",
+  '2025-10-20':"Diwali", 
+  
+  '2026-03-03':"Holi", '2026-03-20':"Eid-ul-Fitr", '2026-09-14':"Ganesh Chaturthi",
+  '2026-10-19':"Dussehra (Vijayadashami)", '2026-11-08':"Diwali",
 }
 
 // ─── Monthly Phrases ─────────────────────────────────────────────
@@ -231,14 +235,16 @@ export default function InteractiveCalendar() {
   const [rangedNotes, setRangedNotes] = useState<RangedNote[]>([])
   const [noteInput, setNoteInput]     = useState('')
 
-  // Monthly memos
-  const [memos, setMemos] = useState<string[]>(Array(6).fill(''))
+  // Monthly memos per monthKey
+  const [memos, setMemos] = useState<Record<string, string[]>>({})
+  const currentMonthKey = `${curYear}-${curMonth}`
+  const currentMemos = memos[currentMonthKey] || Array(6).fill('')
 
   const theme = THEMES[curMonth]
   const cells = useMemo(() => buildCells(curYear, curMonth), [curYear, curMonth])
   const rows  = useMemo(() => { const r=[]; for(let i=0;i<cells.length;i+=7) r.push(cells.slice(i,i+7)); return r }, [cells])
 
-  // ── Navigation with flip animation ──────────────
+  // ── Navigation with tear animation ──────────────
   const navigate = useCallback((dir: 1|-1) => {
     if (flipState !== 'idle') return
     const outState: FlipState = dir===1 ? 'out-next' : 'out-prev'
@@ -252,8 +258,8 @@ export default function InteractiveCalendar() {
         return n
       })
       setFlipState(inState)
-      setTimeout(() => setFlipState('idle'), 220)
-    }, 220)
+      setTimeout(() => setFlipState('idle'), 400)
+    }, 650)
   }, [flipState])
 
   const goToday = () => { setCurYear(today.year); setCurMonth(today.month) }
@@ -373,7 +379,14 @@ export default function InteractiveCalendar() {
       const saved = localStorage.getItem('ical-state')
       if (saved) {
         const s = JSON.parse(saved)
-        if (s.memos)       setMemos(s.memos)
+        if (s.memos) {
+          if (Array.isArray(s.memos)) {
+            // Migrate legacy flat array
+            setMemos({ [`${today.year}-${today.month}`]: s.memos })
+          } else {
+            setMemos(s.memos)
+          }
+        }
         if (s.events)      setEvents(s.events)
         if (s.rangedNotes) setRangedNotes(s.rangedNotes)
       }
@@ -461,10 +474,17 @@ export default function InteractiveCalendar() {
 
                 {/* Monthly memo lines */}
                 <div className="memo-lines">
-                  {memos.map((m,i) => (
+                  {currentMemos.map((m,i) => (
                     <input key={i} id={`memo-${i+1}`} className="memo-input" type="text"
                       value={m} placeholder="…"
-                      onChange={e=>setMemos(p=>{const n=[...p]; n[i]=e.target.value; return n})}
+                      onChange={e => {
+                        const val = e.target.value
+                        setMemos(prev => {
+                          const arr = [...(prev[currentMonthKey] || Array(6).fill(''))]
+                          arr[i] = val
+                          return { ...prev, [currentMonthKey]: arr }
+                        })
+                      }}
                       aria-label={`Memo line ${i+1}`} maxLength={45}/>
                   ))}
                 </div>
@@ -542,13 +562,18 @@ export default function InteractiveCalendar() {
                           <div className="range-bg"/>
                           <div className="day-inner">
                             <span className="day-number">{cell.day}</span>
-                            {(holiday || hasEv) && (
-                              <span style={{display:'flex',gap:'2px'}}>
-                                {holiday && <span className="holiday-dot" title={holiday}/>}
-                                {hasEv   && <span style={{width:'3.5px',height:'3.5px',borderRadius:'50%',background:'var(--theme-accent)',flexShrink:0}}/>}
-                              </span>
-                            )}
                           </div>
+                          {(holiday || (events[hKey] && events[hKey].length > 0)) && (
+                            <div className="day-events-container">
+                              {holiday && <div className="day-event-chip holiday-chip">{holiday}</div>}
+                              {events[hKey] && events[hKey].slice(0, 2).map((ev) => (
+                                <div key={ev.id} className="day-event-chip">{ev.text}</div>
+                              ))}
+                              {events[hKey] && events[hKey].length > 2 && (
+                                <div className="day-event-chip">+{events[hKey].length - 2} more</div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )
                     })}

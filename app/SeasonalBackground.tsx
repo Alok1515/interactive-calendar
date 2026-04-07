@@ -60,8 +60,8 @@ export default function SeasonalBackground({ month }: { month: number }) {
 
     for (let i = 0; i < N; i++) {
       const [r, g, b] = palette[Math.floor(Math.random() * palette.length)]
-      const minS = season === 'winter' ? 1.5 : season === 'spring' ? 3 : season === 'summer' ? 2 : 5
-      const maxS = season === 'winter' ? 5.5 : season === 'spring' ? 10 : season === 'summer' ? 7 : 13
+      const minS = season === 'winter' ? 3.5 : season === 'spring' ? 6 : season === 'summer' ? 4 : 9
+      const maxS = season === 'winter' ? 9.5 : season === 'spring' ? 16 : season === 'summer' ? 12 : 20
       particles.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
@@ -94,7 +94,7 @@ export default function SeasonalBackground({ month }: { month: number }) {
       ctx.rotate(p.rot)
       ctx.globalAlpha = p.alpha
       ctx.strokeStyle = `rgb(${p.r},${p.g},${p.b})`
-      ctx.lineWidth = p.size > 3.5 ? 1.2 : 0.8
+      ctx.lineWidth = p.size > 6 ? 1.8 : 1.2
       const r = p.size
       if (r < 2.5) {
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2)

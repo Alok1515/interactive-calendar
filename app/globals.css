@@ -50,7 +50,7 @@ body {
   text-align: center;
   padding: 0 12px;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  animation: phraseIn 0.9s cubic-bezier(.22,1,.36,1);
+  animation: phraseIn 0.9s cubic-bezier(.22,1,.36,1) forwards;
 }
 @keyframes phraseIn {
   from { opacity: 0; transform: translateY(-14px); }
@@ -131,30 +131,51 @@ body {
 .calendar-card {
   width: 100%; background: rgba(255,255,255,0.97);
   border-radius: 4px 4px var(--radius) var(--radius);
-  box-shadow: 0 32px 80px rgba(0,0,0,.45), 0 10px 30px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,0.08);
+  box-shadow: 
+    0 32px 80px rgba(0,0,0,.45), 
+    0 10px 30px rgba(0,0,0,.25), 
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 0 120px 10px color-mix(in srgb, var(--theme-accent) 35%, transparent);
   position: relative;
   transition: box-shadow .4s ease;
   backdrop-filter: blur(2px);
 }
-.calendar-card:hover { box-shadow: 0 44px 100px rgba(0,0,0,.55), 0 14px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,0.10); }
-
-/* Perspective wrapper (for flip) */
-.card-perspective { perspective: 1200px; width: 100%; }
-
-/* Flippable content */
-.calendar-content {
-  transform-origin: center;
-  transition: none;
+.calendar-card:hover { 
+  box-shadow: 
+    0 44px 100px rgba(0,0,0,.55), 
+    0 14px 40px rgba(0,0,0,.3), 
+    0 0 0 1px rgba(255,255,255,0.10),
+    0 0 140px 15px color-mix(in srgb, var(--theme-accent) 55%, transparent); 
 }
-.calendar-content.flip-out-next { animation: flipOutL .22s ease forwards; }
-.calendar-content.flip-in-next  { animation: flipInR .22s ease forwards; }
-.calendar-content.flip-out-prev { animation: flipOutR .22s ease forwards; }
-.calendar-content.flip-in-prev  { animation: flipInL .22s ease forwards; }
 
-@keyframes flipOutL { to   { transform: rotateY(-90deg); opacity:0; } }
-@keyframes flipInR  { from { transform: rotateY(90deg);  opacity:0; } }
-@keyframes flipOutR { to   { transform: rotateY(90deg);  opacity:0; } }
-@keyframes flipInL  { from { transform: rotateY(-90deg); opacity:0; } }
+/* Perspective wrapper */
+.card-perspective { perspective: 1200px; width: 100%; position: relative; }
+
+/* Animated content */
+.calendar-content {
+  transition: transform .65s ease;
+}
+.calendar-content.flip-out-next { animation: tearOutNext .65s cubic-bezier(0.6, 0.05, 0.28, 0.91) forwards; transform-origin: top left; }
+.calendar-content.flip-in-next  { animation: dropIn      .4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; transform-origin: center; }
+.calendar-content.flip-out-prev { animation: tearOutPrev .65s cubic-bezier(0.6, 0.05, 0.28, 0.91) forwards; transform-origin: top right; }
+.calendar-content.flip-in-prev  { animation: dropIn      .4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; transform-origin: center; }
+
+@keyframes tearOutNext {
+  0%   { transform: rotateZ(0) translateY(0); opacity: 1; }
+  25%  { transform: rotateZ(-5deg) translateY(-15px) scale(0.98); opacity: 1; box-shadow: 0 40px 60px rgba(0,0,0,0.3); }
+  100% { transform: rotateZ(-40deg) translateY(120vh) scale(0.85); opacity: 0; box-shadow: 0 50px 80px rgba(0,0,0,0.2); }
+}
+
+@keyframes tearOutPrev {
+  0%   { transform: rotateZ(0) translateY(0); opacity: 1; }
+  25%  { transform: rotateZ(5deg) translateY(-15px) scale(0.98); opacity: 1; box-shadow: 0 40px 60px rgba(0,0,0,0.3); }
+  100% { transform: rotateZ(40deg) translateY(120vh) scale(0.85); opacity: 0; box-shadow: 0 50px 80px rgba(0,0,0,0.2); }
+}
+
+@keyframes dropIn {
+  from { transform: translateY(-30px) scale(0.93); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
 
 /* ── Spiral Binding ────────────────────────────── */
 .spiral {
@@ -299,13 +320,13 @@ body {
 /* ── Day Cell ────────────────────────────────────── */
 .day-cell {
   flex:1; position:relative;
-  display:flex; align-items:center; justify-content:center;
-  height: 34px; cursor:pointer; user-select:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  height: 54px; padding-top: 4px; cursor:pointer; user-select:none;
 }
 
 /* Range background strip (the coloured bridge between start and end) */
 .range-bg {
-  position:absolute; top:12%; bottom:12%; left:0; right:0;
+  position:absolute; top:4px; height: 30px; left:0; right:0;
   background:transparent; pointer-events:none; z-index:0;
   transition: background .15s ease;
 }
@@ -321,12 +342,24 @@ body {
 /* Day inner circle */
 .day-inner {
   position:relative; z-index:1;
-  width:30px; height:30px;
+  width:30px; height:30px; flex-shrink:0;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   border-radius:50%; gap:1px;
   transition: background .2s ease, color .2s ease, transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
 }
 .day-number { font-size:.7rem; font-weight:500; line-height:1; }
+
+.day-events-container {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: 100%; margin-top: 2px; z-index: 1; pointer-events: none;
+}
+.day-event-chip {
+  font-size: 0.45rem; font-weight: 600; line-height: 1.1; 
+  color: var(--theme-dark); background: var(--theme-light);
+  border-radius: 2px; padding: 1px 3px; max-width: 90%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.holiday-chip { background: transparent; color: var(--gray-400); font-weight: 500; border: 1px solid var(--gray-200); }
 
 /* Hover */
 .day-cell:hover:not(.range-start):not(.range-end) .day-inner {
@@ -449,9 +482,10 @@ body {
 
   .cal-hero { height: 160px; }
   .day-inner { width:28px; height:28px; }
+  .range-bg { top:3px; height: 28px; }
   .day-number { font-size:.65rem; }
   .day-hdr { font-size:.54rem; }
-  .day-cell { height:30px; }
+  .day-cell { height: 48px; padding-top: 3px; }
   .badge-month { font-size:1.2rem; }
 
   .page-wrap { padding: 30px 12px 50px; }
