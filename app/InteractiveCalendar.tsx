@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import SeasonalBackground from './SeasonalBackground'
 
 // ─── Types ──────────────────────────────────────────────────────
 interface DP { year: number; month: number; day: number }
@@ -39,6 +40,72 @@ const HOLIDAYS: Record<string, string> = {
   '2026-04-05':"Easter",         '2026-05-25':"Memorial Day",'2026-06-19':"Juneteenth",
   '2026-07-04':"Independence Day",'2026-09-07':"Labor Day",  '2026-10-12':"Columbus Day",
   '2026-11-11':"Veterans Day",   '2026-11-26':"Thanksgiving",'2026-12-25':"Christmas",
+}
+
+// ─── Monthly Phrases ─────────────────────────────────────────────
+const MONTH_PHRASES: { phrase: string; sub: string }[][] = [
+  [ // January
+    { phrase: 'A new year is a blank canvas — paint it with intention and courage.', sub: 'Fresh start. Limitless potential.' },
+    { phrase: 'January: the quiet strength of new beginnings lives in every dawn.', sub: 'Your story starts fresh today.' },
+  ],
+  [ // February
+    { phrase: 'Love is not just felt — it is chosen, every single day.', sub: 'Cherish every moment.' },
+    { phrase: 'In the heart of winter, the warmest things are the people around you.', sub: 'Spread kindness freely.' },
+  ],
+  [ // March
+    { phrase: 'Spring is proof that after the coldest season, things can bloom again.', sub: 'Growth is always possible.' },
+    { phrase: 'March reminds us: every long winter gives way to light.', sub: 'Keep going — warmth is near.' },
+  ],
+  [ // April
+    { phrase: 'April showers bring May flowers — every struggle has a beautiful purpose.', sub: 'Trust the process.' },
+    { phrase: 'There is something undeniably beautiful about new beginnings.', sub: 'Embrace this fresh season.' },
+  ],
+  [ // May
+    { phrase: 'May your days bloom with joy, laughter, and endless possibility.', sub: 'This is your season to shine.' },
+    { phrase: 'Like flowers in May, let your true self blossom fully.', sub: 'You are enough, exactly as you are.' },
+  ],
+  [ // June
+    { phrase: 'Summer is the time for long golden days and even longer dreams.', sub: 'Chase what lights you up.' },
+    { phrase: 'The sun does not discriminate — it shines for everyone equally.', sub: "Be someone's sunshine today." },
+  ],
+  [ // July
+    { phrase: 'Live in the sunshine, swim in the sea, drink in the wild air.', sub: 'Adventure is always waiting.' },
+    { phrase: 'July heat: a beautiful reminder that life is meant to be felt fully.', sub: 'Be present. Be alive.' },
+  ],
+  [ // August
+    { phrase: 'August — the golden hour of summer, warm and infinite.', sub: 'Soak in every brilliant moment.' },
+    { phrase: 'Make the most of the light before the seasons gently shift.', sub: 'Every single day is a gift.' },
+  ],
+  [ // September
+    { phrase: 'Autumn shows us how breathtaking it can be to let things go.', sub: 'Release. Renew. Refresh.' },
+    { phrase: 'September: a beautiful turning of the page toward something new.', sub: 'Change is the doorway to growth.' },
+  ],
+  [ // October
+    { phrase: 'In autumn, even the trees remind us that letting go is beautiful.', sub: 'Embrace the shift with grace.' },
+    { phrase: 'Every falling leaf is a tiny act of courage from the tree.', sub: 'You too can let go and soar.' },
+  ],
+  [ // November
+    { phrase: 'Gratitude turns what we already have into more than enough.', sub: 'Count your blessings — they are many.' },
+    { phrase: 'November: a gentle season to slow down, reflect, and give thanks.', sub: 'You have so much to be grateful for.' },
+  ],
+  [ // December
+    { phrase: 'December is not an ending — it is a gathering of everything good.', sub: 'The best is always yet to come.' },
+    { phrase: 'May this season fill your heart with wonder, warmth and magic.', sub: 'Celebrate this beautiful life.' },
+  ],
+]
+
+function PhraseBar({ month }: { month: number }) {
+  const phrases = MONTH_PHRASES[month]
+  const weekOfMonth = Math.floor((new Date().getDate() - 1) / 7)
+  const { phrase, sub } = phrases[weekOfMonth % phrases.length]
+  return (
+    <div className="phrase-bar" key={month} aria-live="polite">
+      <span className="phrase-quote-mark" aria-hidden="true">&ldquo;</span>
+      <p className="phrase-text">{phrase}</p>
+      <div className="phrase-separator" aria-hidden="true" />
+      <span className="phrase-sub">{sub}</span>
+    </div>
+  )
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -327,11 +394,16 @@ export default function InteractiveCalendar() {
 
   return (
     <div className="page-wrap" style={cssVars}>
+      <SeasonalBackground month={curMonth} />
+
       {/* Title */}
       <div className="page-title">
         <h1>Interactive Wall Calendar</h1>
         <p>Click a date to start a range · Double-click for events · Edit notes inline</p>
       </div>
+
+      {/* Seasonal Phrase */}
+      <PhraseBar month={curMonth} />
 
       {/* Navigation */}
       <nav className="cal-nav" aria-label="Calendar navigation">
